@@ -1,0 +1,91 @@
+Slip 40
+
+create table movie24(m_name varchar(20) primary key,release_year int,budget money);
+create table actor24(a_name varchar(20) primary key,role varchar(20),charges money,a_address varchar(30));
+create table ma24(m_name varchar(20)references movie24,a_name varchar(20)references actor24);
+
+insert into movie24 values('rrr',2022,'100000');
+insert into movie24 values('pk',2010,'800000');
+insert into movie24 values('naruto',2017,'700000');
+
+insert into actor24 values('pranav','hero','50000','shrirampur');
+insert into actor24 values('mayur','villan','150','vadala');
+insert into actor24 values('om','hero','50000','pune');
+
+insert into ma24 values('rrr','pranav');
+insert into ma24 values('pk','mayur');
+insert into ma24 values('naruto','om');
+insert into ma24 values('rrr','mayur');
+insert into ma24 values('naruto','pranav');
+
+select *from movie24;
+select*from actor24;
+select*from ma24;
+
+1]Write a function which will accept the movie name as input and 
+prints its release year and budget.
+
+create or replace function class_fees_bhara_re(name movie24.m_name%type)returns void
+as
+$$
+declare
+rec record;
+begin
+for rec in select * from movie24
+where m_name=name
+loop
+raise notice'release_year=% budget=%',rec.release_year,rec.budget;
+end loop;
+end;
+$$
+language plpgsql;
+
+select class_fees_bhara_re('naruto');
+
+2]Write a function using cursor, which will accept the actor name 
+and print the names of all movies in which that actor has acted.
+
+create or replace function rose(name actor24.a_name%type)returns void
+as
+$$
+declare
+r1 movie24.m_name%type;
+c1 cursor for select movie24.m_name from movie24,actor24,ma24
+where movie24.m_name=ma24.m_name
+and actor24.a_name=ma24.a_name
+and actor24.a_name=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'MOVIES NAME=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select rose('pranav');
+
+3]Write a trigger which will be executed whenever an actor is 
+deleted from the actor table, display appropriate message.
+
+create or replace function king()returns trigger
+as
+$$
+declare
+begin
+raise notice'actor record is succesfully deleted';
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t9
+after delete on actor24
+for each row
+execute procedure king();
+
+delete from actor24
+where a_name='spider';

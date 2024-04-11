@@ -1,0 +1,76 @@
+Slip 32
+
+create table area27(aname varchar(20) primary key,area_type varchar(20));
+create table person27(pnumber int primary key,pname varchar(20),birthdate date,income money,aname varchar references area27);
+
+insert into area27 values('river_area','rural');
+insert into area27 values('collage_area','urban');
+insert into area27 values('garden_area','rural');
+
+insert into person27 values(1,'pranav','2005\10\07','12000','river_area');
+insert into person27 values(2,'om','2007\12\17','22000','collage_area');
+insert into person27 values(3,'sai','2005\09\14','10000','garden_area');
+insert into person27 values(4,'ram','2003\02\15','30000','river_area');
+insert into person27 values(5,'sham','2004\06\09','50000','collage_area');
+
+select*from area27;
+select*from person27;
+
+1]Write a function to count the people who are born in month_________.
+
+create or replace function born(m int)returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(*)into c from person27 where extract(month from birthdate)=m;
+return c;
+end;
+$$
+language plpgsql;
+
+select born(10);
+
+2]Write a trigger which will prevent deleting persons from area_____.
+
+create or replace function glory()returns trigger 
+as
+$$
+declare
+begin
+if(old.aname='river_area')then
+raise exception'u cannot delete person from river_area';
+end if;
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t53
+before delete on person27
+for each row
+execute procedure glory();
+
+delete from person27
+where pnumber=1;
+
+3]Write a cursor to accept area_type from user and count people living in that 
+area.
+
+create or replace function spiderman(atype area27.area_type%type)returns int
+as
+$$
+declare
+c int;
+c1 cursor for select count(*)from person27,area27 
+where area27.aname=person27.aname
+and area27.area_type=atype;
+begin
+open c1;
+fetch c1 into c;
+close c1;
+return c;
+end;
+$$
+language plpgsql;

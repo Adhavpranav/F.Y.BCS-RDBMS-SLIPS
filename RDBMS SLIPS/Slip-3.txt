@@ -1,0 +1,89 @@
+Slip 3
+
+create table hospital24(h_no int primary key,h_name varchar(20),city varchar(20));
+create table doctor24(d_no int primary key,d_name varchar(20),specialization varchar(20),charges int,h_no int references hospital24);
+
+insert into hospital24 values(101,'adhav_hospital','shrirampur');
+insert into hospital24 values(102,'gore_hospital','pune');
+insert into hospital24 values(103,'harar_hospital','nashik');
+insert into hospital24 values(104,'harar_hospital','shrirampur');
+
+
+insert into doctor24 values(1,'pranav','orthopedics',1000,101);
+insert into doctor24 values(2,'om','pediatrics',70000,102);
+insert into doctor24 values(3,'mayur','radiology',90000,103);
+insert into doctor24 values(4,'prem','aesthesia',80000,101);
+insert into doctor24 values(5,'nikhil','pediatrics',50000,102);
+
+select*from hospital24;
+select*from doctor24;
+
+1]Write a trigger before insert/update on Doctor table. Raise 
+exception if charges are <0 .
+
+create or replace function spider() returns trigger
+as
+$$
+declare
+begin
+if(new.charges<0)then
+raise exception'CHARGES CANNOT BE NEGATIVE!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger trispi
+before insert or update on doctor24
+for each row
+execute procedure spider();
+
+insert into doctor24 values(7,'nikhil','pediatrics',-9,102);
+
+2]Write a function which will accept the name of the doctor and 
+print the hospital details that the doctor is visiting.
+
+create or replace function visit(name doctor24.d_name%type) returns void
+as
+$$
+declare
+rec record;
+begin
+for rec in select hospital24.* from hospital24,doctor24
+where hospital24.h_no=doctor24.h_no
+and doctor24.d_name=name
+loop
+raise notice'h_no=%',rec.h_no;
+raise notice'h_name=%',rec.h_name;
+raise notice'city=%',rec.city;
+end loop;
+end;
+$$
+language plpgsql;
+
+select visit('pranav');
+
+3]Write a function using cursor to accept the city name and print 
+the names of all hospitals in that city.
+
+create or replace function apple(cname hospital24.city%type) returns void
+as
+$$
+declare
+r1 hospital24.h_name%type;
+c1 cursor for select h_name from hospital24
+where city=cname;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'hospital name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select apple('shrirampur');

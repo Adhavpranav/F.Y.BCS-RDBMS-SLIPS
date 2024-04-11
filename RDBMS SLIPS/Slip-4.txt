@@ -1,0 +1,100 @@
+Slip 4
+
+create table customer24(cno int primary key,cname varchar(20),city varchar(20));
+create table account24(a_no int primary key,a_type varchar(20),opening_date date,balance money,cno int references customer24);
+
+insert into customer24 values(1,'pranav','shrirampur');
+insert into customer24 values(2,'om','nashik');
+insert into customer24 values(3,'mayur','pune');
+
+insert into account24 values(101,'saving','2022/10/05','15000',1);
+insert into account24 values(102,'current','2023/07/07','75000',2);
+insert into account24 values(103,'saving','2024/06/25','55000',3);
+insert into account24 values(104,'current','2022/08/20','95000',1);
+insert into account24 values(105,'saving','2021/04/15','45000',2);
+
+select *from customer24;
+select *from account24;
+
+1]Write a function which accepts account no as input and prints 
+the details of that account.
+
+create or replace function queen(num account24.a_no%type)returns void
+as
+$$
+declare
+r1 account24%rowtype;
+begin
+select * into r1 from account24 where a_no=num;
+raise notice'a_no=%',r1.a_no;
+raise notice'a_type=%',r1.a_type;
+raise notice'opening_date=%',r1.opening_date;
+raise notice'balance=%',r1.balance;
+raise notice'cno=%',r1.cno;
+end;
+$$
+language plpgsql;
+
+select queen('101');
+
+2]Write a function using cursor which accepts customer name and 
+prints all account details of that customer. If the customer name
+is invalid, print appropriate message.
+
+create or replace function exam(name customer24.cname%type)returns void
+as
+$$
+declare
+c int=0;
+r1 account24%rowtype;
+c1 cursor for select account24.* from account24,customer24
+where account24.cno=customer24.cno
+and customer24.cname=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'a_no=%',r1.a_no;
+raise notice'a_type=%',r1.a_type;
+raise notice'opening_date=%',r1.opening_date;
+raise notice'balance=%',r1.balance;
+raise notice'cno=%',r1.cno;
+c=c+1;
+end loop;
+if(c=0)then
+raise exception'customer name is invalid';
+end if;
+close c1;
+end
+$$
+language plpgsql;
+
+select exam('pranav');
+select exam('spider');
+
+3]Write a trigger which is executed whenever update is made to 
+the account table. If the balance becomes less than 1000, print an 
+error message that balance cannot be less than 1000.
+
+create or replace function vscode() returns trigger
+as
+$$
+declare
+begin
+if(new.balance<'1000')then
+raise exception'Balance connot be less than 1000';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger bye
+before update on account24
+for each row
+execute procedure vscode();
+
+update account24
+set balance='900'
+where a_no=101;

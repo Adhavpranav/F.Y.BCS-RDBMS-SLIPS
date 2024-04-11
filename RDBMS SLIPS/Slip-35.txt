@@ -1,0 +1,100 @@
+Slip 35
+
+create table project73(pno int primary key,pname char(20),ptype char(20),duration int);
+create table employee73(empno int primary key,ename char(20),joining_date date);
+create table ep73(pno int references project73,empno int references employee73,start_date date);
+
+insert into project73 values(1,'app_making','private',80);
+insert into project73 values(2,'website_making','private',70);
+insert into project73 values(3,'road_making','goverment',100);
+
+insert into employee73 values(101,'pranav','2022\03\17');
+insert into employee73 values(102,'mayur','2024\10\08');
+insert into employee73 values(103,'krushna','2023\07\26');
+
+insert into ep73 values(1,101,'2022\03\20');
+insert into ep73 values(2,102,'2024\10\10');
+insert into ep73 values(3,103,'2023\07\28');
+insert into ep73 values(1,101,'2022\04\8');
+insert into ep73 values(2,102,'2024\11\4');
+
+select*from project73;
+select *from employee73;
+select*from ep73;
+
+1]Write a stored function to accept project type as an input and display 
+all project names of that type. Raise an exception if the type is
+invalid.
+
+create or replace function senorita(protype project73.ptype%type)returns void
+as
+$$
+declare
+rec record;
+c int=0;
+begin
+for rec in select pname from project73 where ptype=protype
+loop
+raise notice'project name=%',rec.pname;
+c=c+1;
+end loop;
+if(c=0)then
+raise exception'invalid project type';
+end if;
+end;
+$$
+language plpgsql;
+
+select senorita('private');
+
+2]Write a trigger which will get fired before insert/update on project 
+table which will check the duration > 0. Display appropriate 
+message.
+
+create or replace function program()returns trigger
+as
+$$
+declare
+begin
+if(new.duration>0)then
+raise notice'INSERT IS COMPLETE.';
+else
+raise exception'duration cannot be less than zero noob';
+end if ;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t71
+before insert or update on project73
+for each row
+execute procedure program();
+
+insert into project73 values(5,'road_making','goverment',-4);
+
+3]Write a cursor to accept the project name as an input parameter from 
+the user and display the names of employees working on that 
+project.
+
+create or replace function doremon(name project73.pname%type)returns void
+as
+$$
+declare
+r1 employee73.ename%type;
+c1 cursor for select employee73.ename from employee73,project73,ep73
+where employee73.empno=ep73.empno
+and project73.pno=ep73.pno
+and project73.pname=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'emp name=%',r1;
+end loop;
+end;
+$$
+language plpgsql;
+
+select doremon('app_making');

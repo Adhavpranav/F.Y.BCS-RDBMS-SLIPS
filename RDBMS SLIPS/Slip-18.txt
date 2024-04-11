@@ -1,0 +1,89 @@
+Slip 18
+
+create table project50(pno int primary key,pname varchar(20),ptype varchar(20),duration int);
+create table employee50(eno int primary key,ename varchar(20),salary float,joining_date date);
+create table ep50(pno int references project50,eno int references employee50,start_date date);
+
+insert into project50 values(1,'app_making','private',80);
+insert into project50 values(2,'website_making','private',70);
+insert into project50 values(3,'road_making','goverment',100);
+
+insert into employee50 values(101,'pranav','10000','2022\03\17');
+insert into employee50 values(102,'mayur','70000','2024\10\08');
+insert into employee50 values(103,'krushna','5000','2023\07\26');
+
+insert into ep50 values(1,101,'2022\03\20');
+insert into ep50 values(2,102,'2024\10\10');
+insert into ep50 values(3,103,'2023\07\28');
+insert into ep50 values(1,101,'2022\04\8');
+insert into ep50 values(2,102,'2024\11\4');
+
+select*from project50;
+select *from employee50;
+select* from ep50;
+
+1]Write a cursor to accept the employee name as an input parameter 
+and displays the names of projects of that employee.
+
+create or replace function bad_boy(name employee50.ename%type)returns void
+as
+$$
+declare
+r1 project50.pname%type;
+c1 cursor for select project50.pname from project50, employee50, ep50
+where project50.pno = ep50.pno
+and employee50.eno = ep50.eno
+and employee50.ename = name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'project name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select bad_boy('pranav');
+
+2]Write a stored function to count all employees who have joined 
+before ‘2024-10-08’.
+
+create or replace function cemp()returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(*) into c from employee50 where joining_date <'2024-10-08';
+return c;
+end;
+$$
+language plpgsql;
+
+select cemp();
+
+3]Write a trigger which ensures that if an employee's salary entered 
+less than zero, the trigger gets fired.
+
+create or replace function manish()returns trigger
+as
+$$
+declare
+begin
+if(new.salary<'0')then
+raise exception'salary cannot be negative';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t86
+before insert on employee50
+for each row
+execute procedure manish();
+
+insert into employee50 values(105,'spider','-5','2022\03\17');

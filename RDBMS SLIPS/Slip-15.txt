@@ -1,0 +1,89 @@
+Slip 15
+
+create table item22(itemno int primary key,itemname varchar(20));
+create table supplier22(supplier_no int primary key,suppliner_name varchar(20),city varchar(20));
+create table isu22(itemno int references item22,supplier_no int references supplier22,rate money,quantity int);
+
+insert into item22 values(1,'cpu');
+insert into item22 values(2,'keyboard');
+insert into item22 values(3,'mouse');
+
+insert into supplier22 values(101,'pranav','shrirampur');
+insert into supplier22 values(102,'mayur','pune');
+insert into supplier22 values(103,'om','shrirampur');
+
+insert into isu22 values(1,101,'10000',50);
+insert into isu22 values(2,102,'5000',40);
+insert into isu22 values(3,103,'10000',70);
+insert into isu22 values(2,101,'4000',80);
+insert into isu22 values(3,102,'5000',10);
+insert into isu22 values(2,102,'40',6);
+
+select*from item22;
+select*from supplier22;
+select*from isu22;
+
+1]Write a function to accept the city name as input and returns the 
+number of suppliers living in that city.
+
+create or replace function mom(cname supplier22.city%type)returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(*)into c from supplier22 where city=cname;
+return c;
+end;
+$$
+language plpgsql;
+
+select mom('pune');
+
+2]Write a cursor to display the names of items whose rate is more 
+than 500.
+
+create or replace function dad()returns void 
+as
+$$
+declare
+r1 item22.itemname%type;
+c1 cursor for select item22.itemname from item22,isu22
+where item22.itemno=isu22.itemno
+and isu22.rate>'500';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select dad();
+
+3]Write a trigger before insert or update on rate field. If the rate is 
+less than 50 then raise the appropriate exception.
+
+create or replace function sister()returns trigger 
+as
+$$
+declare
+begin
+if(new.rate<'50')then
+raise exception'rate cannot be less than 50';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t52
+before insert or update on isu22
+for each row
+execute procedure sister();
+
+insert into isu22 values(4,103,'40',70);

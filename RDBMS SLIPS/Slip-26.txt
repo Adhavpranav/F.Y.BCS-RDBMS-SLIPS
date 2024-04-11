@@ -1,0 +1,89 @@
+Slip 26
+
+create table car66(c_no int primary key,owner varchar(20),model varchar(20),color varchar(20));
+create table driver66(driver_no int primary key,driver_name varchar(20),license_no int,d_age int,salary float);
+create table cd66(c_no int references car66,driver_no int references driver66);
+
+insert into car66 values(101,'pranav','lambo','white');
+insert into car66 values(102,'mayur','ferari','orange');
+insert into car66 values(103,'shubham','kavasaki','green');
+
+insert into driver66 values(1,'prem',1001,30,50000);
+insert into driver66 values(2,'nikhil',1002,20,70000);
+insert into driver66 values(3,'om',1003,40,30000);
+
+insert into cd66 values(101,1);
+insert into cd66 values(102,2);
+insert into cd66 values(103,3);
+insert into cd66 values(103,1);
+insert into cd66 values(101,2);
+
+select*from car66;
+select*from driver66;
+select*from cd66;
+
+1]Write a function which accepts the driver name and counts the 
+number of cars driven by the driver.
+
+create or replace function star(name driver66.driver_name%type)returns int 
+as
+$$
+declare
+c int=0;
+begin
+select count(car66.*)into c from car66,driver66,cd66
+where car66.c_no=cd66.c_no
+and driver66.driver_no=cd66.driver_no
+and driver66.driver_name=name;
+return c;
+end;
+$$
+language plpgsql;
+
+select star('prem');
+
+2]Write a stored function with cursor which accepts the color and 
+prints the names of all owners who own a car of that color.
+
+create or replace function cloud(colour car66.color%type)returns void
+as
+$$
+declare
+r1 car66.owner%type;
+c1 cursor for select owner from car66 where color=colour;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'owner name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+ 
+select cloud('white');
+
+3]Write a trigger before insert/update on Driver. Raise exception if 
+driver salary is negative or zero.
+
+create or replace function arora()returns trigger 
+as
+$$
+declare
+begin
+if(new.salary<=0)then
+raise exception'salary cannot be negativr or zero';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t28
+before insert or update on driver66
+for each row 
+execute procedure arora();
+
+insert into driver66 values(5,'spider',1004,18,-8000);

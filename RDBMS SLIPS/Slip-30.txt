@@ -1,0 +1,84 @@
+Slip 30
+
+create table customer99(cno int primary key,cname varchar(20),city varchar(20));
+create table account99(a_no int primary key,a_type varchar(20),opening_date date,balance money,cno int references customer99);
+
+insert into customer99 values(1,'pranav','shrirampur');
+insert into customer99 values(2,'om','nashik');
+insert into customer99 values(3,'mayur','pune');
+
+insert into account99 values(101,'saving','2022/10/05','15000',1);
+insert into account99 values(102,'current','2023/07/07','75000',2);
+insert into account99 values(103,'saving','2024/06/25','55000',3);
+insert into account99 values(104,'current','2022/08/20','95000',1);
+insert into account99 values(105,'saving','2021/04/15','45000',2);
+
+select*from customer99;
+select*from account99;
+
+1]Write a function which accepts customer name as input and counts 
+the total number of accounts of that customer.
+
+create or replace function facebook(name customer99.cname%type)returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(account99.*)into c from account99,customer99
+where customer99.cno=account99.cno
+and customer99.cname=name;
+return c;
+end;
+$$
+language plpgsql;
+
+select facebook('pranav');
+
+2]Write a function using cursor which accepts city name as input and 
+prints the details of all customers in that city.
+
+create or replace function whatsapp(name customer99.city%type)returns void 
+as
+$$
+declare
+r1 customer99%rowtype;
+c1 cursor for select *from customer99 where city=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'cno=%',r1.cno;
+raise notice'cname=%',r1.cname;
+raise notice'city=%',r1.city;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select whatsapp('pune');
+
+3]Write a trigger which does not allow deletion of accounts of____
+type.
+
+create or replace function twitter()returns trigger
+as
+$$
+declare
+begin
+if(old.a_type='saving')then
+raise exception'sorry u cannot delete saving account details';
+end if;
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t27
+before delete on account99
+for each row
+execute procedure twitter();
+
+delete from account99 where a_no=101;

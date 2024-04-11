@@ -1,0 +1,87 @@
+Slip 19
+
+create table area32(aid int primary key,aname varchar(20),area_type varchar(20));
+create table person32(pno int primary key,pname varchar(20),birthdate date,income money,aid int references area32);
+
+
+insert into area32 values(101,'river_area','rural');
+insert into area32 values(102,'collage_area','urban');
+insert into area32 values(103,'garden_area','rural');
+
+insert into person32 values(1,'pranav','2005\10\07','12000',101);
+insert into person32 values(2,'om','2007\12\17','22000',102);
+insert into person32 values(3,'sai','2005\09\14','10000',103);
+insert into person32 values(4,'ram','2003\02\15','30000',101);
+insert into person32 values(5,'sham','2004\06\09','50000',102);
+
+select*from area32;
+select*from person32;
+
+1]Write a stored function to update the income of all persons living in 
+rural area by 10%.
+
+create or replace function naruto2()returns void
+as
+$$
+declare
+rec record;
+begin
+for rec in select person32.pno from person32,area32
+where person32.aid=area32.aid
+and area32.area_type='rural'
+loop
+update person32
+set income=income*1.10
+where pno=rec.pno;
+end loop;
+end;
+$$
+language plpgsql;
+
+select naruto2();
+
+2]Write a trigger before deleting a person's record from the person's 
+table. Raise a notice and display the message “person record is being 
+deleted”.
+
+create or replace function race()returns trigger 
+as
+$$
+declare
+begin
+raise notice'person record is deleted';
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger samu13
+before delete on person32
+for each row
+execute procedure race();
+
+delete from person32
+where pno=2;
+
+3] Write a cursor to display the names of persons living in urban area.
+
+create or replace function ss()returns void as
+$$
+declare
+r1 person32.pname%type;
+c1 cursor for select person32.pname from person32,area32
+where person32.aid=area32.aid
+and area32.area_type='urban';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select ss();

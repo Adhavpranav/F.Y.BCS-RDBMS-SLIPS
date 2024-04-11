@@ -1,0 +1,92 @@
+Slip 17
+
+create table student101(roll_no int primary key,sname varchar(20),sclass char(10));
+create table teacher101(t_no int primary key,tname char(20),experience int);
+create table st101(roll_no int references student101,t_no int references teacher101,subject varchar(20));
+
+insert into student101 values(1,'pranav','fybcs');
+insert into student101 values(2,'om','sybcs');
+insert into student101 values(3,'sai','fybca');
+
+insert into teacher101 values(101,'hurule_mam',5);
+insert into teacher101 values(102,'pawar_mam',10);
+insert into teacher101 values(103,'shinde_mam',7);
+
+insert into st101 values(1,101,'c_language');
+insert into st101 values(2,101,'rdbms');
+insert into st101 values(3,101,'java');
+insert into st101 values(1,101,'html');
+insert into st101 values(2,102,'mongodb');
+
+select*from student101;
+select*from teacher101;
+select*from st101;
+
+1]Write a trigger before inserting the teacher record into a teacher 
+table. Experience should be a minimum of 4 years. If it is less than 4 
+years trigger gets fired and displays an appropriate message.
+
+create or replace function love()returns trigger 
+as
+$$
+declare
+begin
+if(new.experience<4)then
+raise exception'exp miminum 4 years requaired';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger tri101
+before insert on teacher101
+for each row
+execute procedure love();
+
+insert into teacher101 values(105,'pranav_sir',3);
+
+2]Write a cursor to accept the student name from the user as an input
+and give list of subjects taken by the student.
+
+create or replace function blood(name student101.sname%type)returns void
+as
+$$
+declare
+r1 st101.subject%type;
+c1 cursor for select st101.subject from st101,student101
+where st101.roll_no=student101.roll_no
+and student101.sname=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'subject name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select blood('pranav');
+
+3]Write a stored function to find the details of the maximum
+experienced teacher.
+
+create or replace function gold() returns void 
+as
+$$
+declare
+rec record;
+begin
+for rec in select * from teacher101 where experience=(select
+max(experience) from teacher101)
+loop
+raise notice't_no=%  tname=%  experience=%',rec.t_no,rec.tname,rec.experience;
+end loop;
+end;
+$$
+language plpgsql;
+
+select gold();

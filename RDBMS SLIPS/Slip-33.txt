@@ -1,0 +1,100 @@
+Slip 33
+
+create table car136(c_no int primary key,owner varchar(20),model varchar(20),color varchar(20));
+create table driver136(driver_no int primary key,driver_name varchar(20),license_no int,d_age int,salary float);
+create table cd136(c_no int references car136,driver_no int references driver136);
+
+insert into car136 values(101,'pranav','lambo','white');
+insert into car136 values(102,'mayur','ferari','orange');
+insert into car136 values(103,'shubham','kavasaki','green');
+
+insert into driver136 values(1,'prem',1001,30,50000);
+insert into driver136 values(2,'nikhil',1002,20,70000);
+insert into driver136 values(3,'om',1003,40,30000);
+
+insert into cd136 values(101,1);
+insert into cd136 values(102,2);
+insert into cd136 values(103,3);
+insert into cd136 values(103,1);
+insert into cd136 values(101,2);
+
+select*from car136;
+select*from driver136;
+select*from cd136;
+
+1]Write a function which accepts the model name and prints all 
+cars of that model.
+
+create or replace function ring(name car136.model%type)returns void
+as
+$$
+declare
+rec record;
+begin
+for rec in select * from car136 where model=name
+loop
+raise notice'c_no=% owner=% model=% color=%',rec.c_no,rec.owner,rec.model,rec.color;
+end loop;
+end;
+$$
+language plpgsql;
+
+select ring('lambo');
+
+2]Write a trigger before insert/update on Driver. Raise 
+exception if driver age is < 21.
+
+create or replace function sunraise()returns trigger 
+as
+$$
+declare
+begin
+if(new.d_age<21)then
+raise exception'deivers age cannot be less than 21';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t64
+before insert or update on driver136
+for each row
+execute procedure sunraise();
+
+insert into driver136 values(4,'kunal',1003,20,30000);
+
+3]Write a cursor which accepts the driver name and prints the 
+details of all cars that this driver has driven, if the driver 
+name is invalid, print an appropriate message.
+
+create or replace function warden(name driver136.driver_name%type)returns void 
+as
+$$
+declare
+c int=0;
+r1 car136%rowtype;
+c1 cursor for select car136.* from car136,driver136,cd136
+where car136.c_no=cd136.c_no
+and driver136.driver_no=cd136.driver_no
+and driver136.driver_name=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'c_no=%',r1.c_no;
+raise notice'owner=%',r1.owner;
+raise notice'model=%',r1.model;
+raise notice'color=%',r1.color;
+c=c+1;
+end loop;
+if(c=0)then
+raise exception'invalid driver name';
+end if;
+close c1;
+end;
+$$
+language plpgsql;
+
+select warden('prem');

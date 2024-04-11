@@ -1,0 +1,86 @@
+Slip 12
+
+create table department25(dno int primary key,dname varchar(20),city varchar(20));
+create table employee25(eno int primary key,ename varchar(20),salary money,dno int references department25);
+
+insert into department25 values(101,'software','shrirampur');
+insert into department25 values(102,'production','pune');
+insert into department25 values(103,'advertisement','nashik');
+insert into department25 values(104,'packing','shrirampur');
+
+
+insert into employee25 values(1,'pranav','40000',101);
+insert into employee25 values(2,'sai','70000',102);
+insert into employee25 values(3,'om','80000',103);
+insert into employee25 values(4,'sham','90000',101);
+insert into employee25 values(5,'didi','50000',102);
+
+select*from department25;
+select*from employee25;
+
+1]Write a function to accept department city as input and returns 
+the total number of departments in that city.
+
+create or replace function rocket1(cname department25.city%type)returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(*) into c from department25 
+where city=cname;
+return c;
+end;
+$$
+language plpgsql;
+
+select rocket1('shrirampur');
+
+2]Write a cursor to display the department-wise names of 
+employees whose salary is between 50000 and 90000.
+
+create or replace function rider()returns void
+as
+$$
+declare
+r1 employee25.ename%type;
+c1 cursor for select employee25.ename from employee25,department25
+where employee25.dno=department25.dno
+and employee25.salary between'50000'and'90000'
+order by department25.dname;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select rider();
+
+3]Write a trigger before inserting an employee record in the 
+Employee table. Raise an exception if salary < 0.
+
+create or replace function z900() returns trigger
+as
+$$
+declare
+begin
+if(new.salary<'0')then
+raise exception'salary cannot be negative!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger tri631
+before insert on employee25
+for each row
+execute procedure z900();
+
+insert into employee25 values(9,'pranav','-2',101);

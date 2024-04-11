@@ -1,0 +1,89 @@
+Slip 11
+
+create table customer32(cno int primary key,cname varchar(20),city varchar(20));
+create table account32(a_no int primary key,a_type varchar(20),opening_date date,balance money,cno int references customer32);
+
+insert into customer32 values(1,'pranav','shrirampur');
+insert into customer32 values(2,'om','nashik');
+insert into customer32 values(3,'mayur','pune');
+
+insert into account32 values(101,'saving','2022/10/05','15000',1);
+insert into account32 values(102,'current','2023/07/07','75000',2);
+insert into account32 values(103,'saving','2024/06/25','55000',3);
+insert into account32 values(104,'current','2022/08/20','95000',1);
+insert into account32 values(105,'saving','2021/04/15','45000',2);
+
+select *from customer32;
+select *from account32;
+
+1]Write a function to display the number of accounts whose 
+opening date is before’2023/07/07’.
+
+create or replace function semister() returns void 
+as
+$$
+declare
+rec record;
+begin
+for rec in select a_no from account32
+where opening_date<'2023/07/07'
+loop
+raise notice'a_no=%',rec.a_no;
+end loop;
+end;
+$$
+language plpgsql;
+
+select semister();
+
+2]Write a cursor to display the account details of all customers 
+from “Pune” city.
+
+create or replace function pandu() returns void
+as
+$$
+declare
+r1 account32%rowtype;
+c1 cursor for select account32.* from account32,customer32
+where account32.cno=customer32.cno
+and customer32.city='pune';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'a_no=%',r1.a_no;
+raise notice'a_type=%',r1.a_type;
+raise notice'opening_date=%',r1.opening_date;
+raise notice'balance=%',r1.balance;
+raise notice'cno=%',r1.cno;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select pandu();
+
+3]Write a trigger before deleting an account record from Account 
+table. Raise a notice and display the message “Account record is 
+being deleted.”
+
+create or replace function helloworld()returns trigger
+as
+$$ 
+declare
+begin
+raise notice'account record is deleted';
+return old;
+end;
+$$
+language plpgsql;
+
+create trigger t76
+before delete on  account32
+for each row
+execute procedure helloworld();
+
+delete from account32
+where a_no=105;

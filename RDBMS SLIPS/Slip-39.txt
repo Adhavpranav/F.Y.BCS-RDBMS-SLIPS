@@ -1,0 +1,93 @@
+Slip 39
+
+create table movie95(m_name varchar(20)primary key,release_year int,budget money);
+create table producer95(p_id int primary key,pname varchar(20),p_address varchar(20));
+create table mp95(m_name varchar(20)references movie95,p_id int references producer95);
+
+insert into movie95 values('solo_leaveling',2024,100000);
+insert into movie95 values('naruto',2023,300000);
+insert into movie95 values('attack_on_titans',2019,200000);
+
+insert into producer95 values(1,'pranav','shrirampur');
+insert into producer95 values(2,'nikhil','pune');
+insert into producer95 values(3,'prem','shrirampur');
+
+insert into mp95 values('solo_leaveling',1);
+insert into mp95 values('naruto',2);
+insert into mp95 values('attack_on_titans',3);
+insert into mp95 values('solo_leaveling',1);
+insert into mp95 values('attack_on_titans',2);
+
+select *from movie95;
+select*from producer95;
+select*from mp95;
+
+1]Write a stored function which accepts the producer name and prints the number of 
+movies produced by him.
+
+create or replace function moonlight(name producer95.pname%type)returns void
+as
+$$
+declare
+c int=0;
+begin
+select count(movie95.*) into c from movie95,producer95,mp95
+where movie95.m_name=mp95.m_name
+and producer95.p_id=mp95.p_id
+and producer95.pname=name;
+raise notice'movies produce by him=%',c;
+end;
+$$
+language plpgsql;
+
+select moonlight('pranav');
+
+2]Write a stored function using cursor, which will accept the movie name and print 
+the names of all producers who have produced that movie.
+
+create or replace function ak47(name movie95.m_name%type)returns void
+as
+$$
+declare
+r1 producer95.pname%type;
+c1 cursor for select producer95.pname from producer95,movie95,mp95
+where producer95.p_id=mp95.p_id
+and movie95.m_name=mp95.m_name
+and movie95.m_name=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select ak47('solo_leaveling');
+
+3]Write a trigger which will be executed whenever insertion is made to the movie 
+table. If the budget is less than 1,00,000 do not allow the insertion. Give appropriate 
+message.
+
+create or replace function obito()returns trigger
+as
+$$
+declare
+begin
+if(new.budget<'100000')then
+raise exception'we cannot made movie under 1 lakh noob increase price!!';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t67
+before insert on movie95
+for each row
+execute procedure obito();
+
+insert into movie95 values('attack_on_titans4',2020,20000);

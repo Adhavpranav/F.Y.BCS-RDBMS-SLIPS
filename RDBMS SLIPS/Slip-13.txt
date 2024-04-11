@@ -1,0 +1,87 @@
+Slip 13
+
+create table customer75(cno int primary key,cname varchar(20),city varchar(20));
+create table account75(accno int primary key,acc_type varchar(20),opening_date date,balance money,cno int references customer75);
+
+insert into customer75 values(1,'pranav','shrirampur');
+insert into customer75 values(2,'prem','pune');
+insert into customer75 values(3,'mayur','shrirampur');
+
+insert into account75 values(101,'saving','2022\10\06','10000',1);
+insert into account75 values(102,'current','2023\11\19','20000',2);
+insert into account75 values(103,'saving','2024\12\27','30000',3);
+insert into account75 values(104,'current','2022\5\29','70000',1);
+insert into account75 values(105,'saving','2019\7\16','50000',2);
+
+select *from customer75;
+select *from account75;
+
+1]Write a function to accept account type as input and give the 
+maximum account balance of that type.
+
+create or replace function rcb(type account75.acc_type%type)returns void
+as
+$$
+declare
+c money;
+begin
+select max(balance)into c from account75
+where acc_type=type;
+raise notice'max balance=%',c;
+end;
+$$
+language plpgsql;
+
+select rcb('current');
+
+2]Write a cursor to display account details of all customers of 
+“Pune” city.
+
+create or replace function water()returns void
+as
+$$
+declare
+r1 account75%rowtype;
+c1 cursor for select account75.* from account75,customer75
+where account75.cno=customer75.cno
+and customer75.city='pune';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'accno=%',r1.accno;
+raise notice'acc_type=%',r1.acc_type;
+raise notice'opening_date=%',r1.opening_date;
+raise notice'balance=%',r1.balance;
+raise notice'cno=%',r1.cno;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select water();
+
+3]Write a trigger before inserting an account record in Account 
+table and raise exception if balance is <500.
+
+create or replace function abcd() returns trigger
+as
+$$
+declare
+begin
+if(new.balance<'500')then
+raise exception'balance cannot be less than 500';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t67
+before insert on account75
+for each row
+execute procedure abcd();
+
+insert into account75 values(107,'saving','2019\7\16','400',2);

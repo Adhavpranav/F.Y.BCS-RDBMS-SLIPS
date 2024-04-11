@@ -1,0 +1,85 @@
+Slip 14
+
+create table department100(dno int primary key,dname varchar(20),city varchar(20));
+create table employee100(eno int primary key,ename varchar(20),salary float,dno int references department100);
+
+insert into department100 values(101,'account','shrirampur');
+insert into department100 values(102,'packing','pune');
+insert into department100 values(103,'testing','shrirampur');
+
+insert into employee100 values(1,'pranav','10000',101);
+insert into employee100 values(2,'mayur','50000',102);
+insert into employee100 values(3,'om','70000',103);
+insert into employee100 values(4,'sai','60000',101);
+insert into employee100 values(5,'ram','90000',102);
+
+select*from department100;
+select*from employee100;
+
+1]Write a function to accept department name and display the 
+average salary of employees in that department.
+
+create or replace function adhav(name department100.dname%type)returns void
+as
+$$
+declare
+salavg float=0;
+begin
+select avg(salary)into salavg from employee100,department100
+where employee100.dno=department100.dno
+and department100.dname=name;
+raise notice'average salary=%',salavg;
+end;
+$$
+language plpgsql;
+
+select adhav('account');
+
+2]Write a cursor to display the names of employees who works in 
+“account” department.
+
+create or replace function coder()returns void
+as
+$$
+declare
+r1 employee100.ename%type;
+c1 cursor for select employee100.ename from employee100,department100
+where department100.dno=employee100.dno
+and department100.dname='account';
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select coder();
+
+3]Write a trigger before updating an employee record in the 
+Employee table. Raise a notice and display the message 
+“Employee record is being updated”.
+
+create or replace function fun55() returns trigger
+as
+$$
+declare
+begin
+raise notice'emp record is being updated';
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger jah
+before update on employee100
+for each row
+execute procedure fun55(); 
+
+update employee100
+set ename='spidy'
+where eno=1;

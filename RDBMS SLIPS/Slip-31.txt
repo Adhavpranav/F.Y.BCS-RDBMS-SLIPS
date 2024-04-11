@@ -1,0 +1,82 @@
+Slip 31
+
+create table department39(dno int primary key,dname varchar(20),city varchar(20));
+create table employee39(eno int primary key,ename varchar(20),salary money,dno int references department39);
+
+insert into department39 values(101,'software','shrirampur');
+insert into department39 values(102,'production','pune')
+insert into department39 values(103,'advertisement','nashik');
+insert into department39 values(104,'packing','shrirampur');
+
+
+insert into employee39 values(1,'pranav','40000',101);
+insert into employee39 values(2,'sai','70000',102);
+insert into employee39 values(3,'om','80000',103);
+insert into employee39 values(4,'sham','90000',101);
+insert into employee39 values(5,'didi','50000',102);
+
+select*from department39;
+select*from employee39;
+
+1]Write a function to accept department name and return the 
+number of employees of that department.
+
+create or replace function gara(name department39.dname%type)returns int 
+as
+$$
+declare
+c int=0;
+begin
+select count(employee39.*)into c from employee39,department39
+where employee39.dno=department39.dno
+and department39.dname=name;
+return c;
+end;
+$$
+language plpgsql;
+
+select gara('software');
+
+2]Write a cursor to accept salary as input and display the names of 
+employees having salary > that value.
+
+create or replace function wish(sal employee39.salary%type)returns void
+as
+$$
+declare
+r1 employee39.ename%type;
+c1 cursor for select ename from employee39 where salary>sal;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'nmae=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select wish('70,000.00');
+
+3]Write a trigger after insert on an employee record. Display 
+appropriate message when the record is inserted.
+
+create or replace function sea()returns trigger
+as
+$$
+declare 
+begin
+raise notice'record successfully insert';
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t54
+after insert on employee39
+for each row
+execute procedure sea();
+
+insert into employee39 values(7,'dada','50000',103);

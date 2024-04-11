@@ -1,0 +1,91 @@
+Slip 16
+
+create table student78(roll_no int primary key,sname varchar(20),sclass char(10));
+create table teacher78(t_no int primary key,tname char(20),experience int);
+create table st78(roll_no int references student78,t_no int references teacher78,subject varchar(20));
+
+insert into student78 values(1,'pranav','fybcs');
+insert into student78 values(2,'om','sybcs');
+insert into student78 values(3,'sai','fybca');
+
+insert into teacher78 values(101,'hurule_mam',5);
+insert into teacher78 values(102,'pawar_mam',10);
+insert into teacher78 values(103,'shinde_mam',7);
+
+insert into st78 values(1,101,'c_language');
+insert into st78 values(2,101,'rdbms');
+insert into st78 values(3,101,'java');
+insert into st78 values(1,101,'html');
+insert into st78 values(2,102,'mongodb');
+
+select*from student78;
+select*from teacher78;
+select*from st78;
+
+1]Write a trigger before insert the record of the student in the Student 
+table. If the Roll_No is less than or equal to zero then the trigger 
+gets fired and displays the message “Invalid Roll Number”.
+
+create or replace function ironman()returns trigger
+as
+$$
+declare
+begin
+if(new.roll_no<=0)then
+raise exception'invalid roll no';
+end if;
+return new;
+end;
+$$
+language plpgsql;
+
+create trigger t20
+before insert on student78
+for each row
+execute procedure ironman();
+
+insert into student78 values(-4,'ram','fybca');
+
+2]Write a cursor to accept the student's name from the user as an 
+input and display names of all teachers teaching that student.
+
+
+create or replace function funname(name student78.sname%type)returns void
+as
+$$
+declare
+r1 teacher78.tname%type;
+c1 cursor for select teacher78.tname from teacher78,student78,st78
+where teacher78.t_no=st78.t_no
+and student78.roll_no=st78.roll_no
+and student78.sname=name;
+begin
+open c1;
+loop
+fetch c1 into r1;
+exit when not found;
+raise notice'teacher name=%',r1;
+end loop;
+close c1;
+end;
+$$
+language plpgsql;
+
+select funname('om');
+
+3]Write a stored function to count the number of teachers having 
+experience > 5 years.
+
+create or replace function experi()returns int
+as
+$$
+declare
+c int=0;
+begin
+select count(*)into c from teacher78 where experience>5;
+return c;
+end;
+$$
+language plpgsql;
+
+select experi();
